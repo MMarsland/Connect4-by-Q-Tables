@@ -4,10 +4,9 @@
     <head>
       <link rel="stylesheet" type="text/css" href="styles.css">
 
-      <script src="NeuralNetwork.js"></script>
+      <script src="QLearner.js"></script>
       <script src="Matrix.js"></script>
       <script src="AI.js"></script>
-      <script src="Script.js"></script>
     </head>
     <body onload="onload()">
         <div id="main">
@@ -20,19 +19,11 @@
               <input id="timesInput" type="text" placeholder="1" value="1"/>
               <label for="view">Spectate?</label>
               <input id="view" type="checkbox" checked/>
-              <div id="viewNNButtons">
-                <button onclick="viewNN(player1)">View Player1 NeuralNetwork</button>
-                <button onclick="viewNN(player2)">View Player2 NeuralNetwork</button>
-              </div>
+
               <div id="nextTurn">Next Player: Blue</div>
             </div>
             <div id="playArea">
 
-            </div>
-          </div>
-          <div id="viewNN">
-            <button onclick="returnToHome()">Back</button>
-            <div id="representationOfNN">
             </div>
           </div>
         </div>

@@ -1,28 +1,31 @@
-
-    /*
-    let win_loss_states = [[4,1], [7,2], [0,3], [4,3], [4,5], [7,5], [5,7], [2,8], [7,8]];
-    let qMatrix =  [[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-                    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]];
-                    */
-
-    let blueTurn = true;
     // BOARD IS COL-ROW
     let gameBoard = [[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]];
-    let player1 = new NeuralNetwork(42, 50, 50, 20, 7);
-    let player2 = new NeuralNetwork(42, 100, 500, 500, 300, 200, 100, 50, 40, 30, 20, 10, 7);
+    let blueTurn = true;
+    let player1 = new QLearner(0.1, 0.1, 0.1);
+    let player2 = new QLearner(0.1, 0.1, 0.1);
     let userGameStats = {
       userPlaying: false,
       round: 0,
       winner: null,
     }
+
+    // Test
+    function test() {
+      let board = deepCopyArray(gameBoard);
+      board[3][4] = 1;
+      board[3][5] = 1;
+      board[3][0] = 1;
+      board[1][4] = 2;
+      board[2][3] = 1;
+      board[6][0] = 0;
+      console.log(board);
+      let hashValue = hash(board);
+      console.log(hashValue);
+      let state = unHash(hashValue);
+      console.log(state);
+    }
+    // END
+
 
     // UI functions
     function onload() {
@@ -86,6 +89,7 @@
       userGameStats.winner = null;
     }
 
+/*
     function columnClicked(colNum) {
       if (!userGameStats.userPlaying) {return;}
       userGameStats.round++;
@@ -123,7 +127,7 @@
         document.getElementById("nextTurn").innerHTML = userGameStats.winner==1?"Winner: Blue!":(userGameStats.winner == 2 ? "Winner: Yellow!" : "Tie Game!");
       }
     }
-
+*/
 
 
 
@@ -138,20 +142,20 @@
         return random;
     }
 
-    function deepCopyMatrix(matrix) {
-      let newMatrix = [];
-      for (let i=0; i<matrix.length; i++) {
-        if (matrix[i] instanceof Array) {
-          newMatrix[i] = deepCopyMatrix(matrix[i]);
+    function deepCopyArray(array) {
+      let newArray = [];
+      for (let i=0; i<array.length; i++) {
+        if (array[i] instanceof Array) {
+          newArray[i] = deepCopyArray(array[i]);
         } else {
-          newMatrix[i] = matrix[i];
+          newArray[i] = array[i];
         }
       }
-      return newMatrix;
+      return newArray;
     }
 
     function fillArray(array, value) {
-      let newArray = deepCopyMatrix(array);
+      let newArray = deepCopyArray(array);
       for (let i=0;i<array.length;i++) {
         newArray[i] = value;
       }
@@ -186,14 +190,14 @@
 
     // Returns new board
     function placeInBoard(board, colNum) {
-      let newBoard = deepCopyMatrix(board);
+      let newBoard = deepCopyArray(board);
       newBoard[colNum] = placeInColumn(newBoard[colNum]);
       return newBoard;
     }
 
     // PRIVATE returns new column
     function placeInColumn(column) {
-      let newColumn = deepCopyMatrix(column);
+      let newColumn = deepCopyArray(column);
       for(let row=5; row>=0; row--) {
         if (newColumn[row] == 0) {
           newColumn[row] = ( blueTurn ? 1 : 2 );
@@ -265,6 +269,308 @@
     }
     //END
 
+
+
+    // Q-Learning Functions
+
+    //Run Train
+    async function runTrain() {
+      userPlaying = false;
+      let times = document.getElementById("timesInput").value;
+      let view = document.getElementById("view").checked;
+      player1.lastStateHash = undefined;
+      player1.lastAction = undefined;
+      player2.lastStateHash = undefined;
+      player2.lastAction = undefined;
+
+      console.log(`Train called with times==${times} and view==${view}`);
+      let startTime = new Date();
+      await train(times, view);
+      let endTime = new Date();
+      let timeDiff = endTime - startTime; //in ms
+      console.log(`Completed training in ${timeDiff/1000} seconds`);
+    }
+
+    // Train
+    async function train(times, view) {
+
+      for (let i=0; i<times; i++) {
+        reset();
+
+        if (view) { updateViewToGameBoard(); console.log(`Starting Game ${i+1}`); }
+
+        // Run a game
+        round = 1;
+        //Player1 move (to start game)
+        //Original State
+        player1Action = getAction(player1, gameBoard);
+        makeMove(player1, gameBoard, player1Action);
+
+        if (view) {
+          updateViewToGameBoard();
+          console.log(`ROUND ${round}: Player1 placing in column ${player1Action}`);
+          await sleep(500);
+        }
+
+        //LOOP
+        while(checkForWin(gameBoard) == null) {
+
+          //player2
+          player2Action = getAction(player2, gameBoard);
+          makeMove(player2, gameBoard, player2Action);
+          if (view) {
+            updateViewToGameBoard();
+            console.log(`ROUND ${round}: Player2 placing in column ${player2Action}`);
+            await sleep(500);
+          }
+
+          //TrainPlayer1
+          update(player1, gameBoard);
+
+          if (checkForWin(gameBoard) != null) {
+            update(player2, gameBoard);
+            break;
+          }
+          round++;
+
+          //player1
+          player1Action = getAction(player1, gameBoard);
+          makeMove(player1, gameBoard, player1Action);
+          if (view) {
+            updateViewToGameBoard();
+            console.log(`ROUND ${round}: Player1 placing in column ${player1Action}`);
+            await sleep(500);
+          }
+
+          //TrainPlayer2
+          update(player2, gameBoard);
+
+          if (checkForWin(gameBoard) != null) {
+            update(player1, gameBoard);
+            break;
+          }
+        }
+      }
+    }
+
+
+    // Make MOVE
+    function makeMove(player, board, action) {
+      //HIDE
+      gameBoard = placeInBoard(board, action);
+      blueTurn = !blueTurn;
+    }
+
+    // Get ACTION
+    function getAction(player, state) {
+        let stateHash = hash(state);
+        let rewards = player.qTable[stateHash];
+        let action;
+        if (rewards && getRandInt(0,10) > player.explortationRate * 10) {
+          // Exists and not random
+          for (let col=0; col<7; col++) {
+            if (columnFull(state, col)) {
+              rewards[col] = -1;
+            }
+            // Otherwise leave it as is
+          }
+
+          // Check for equal maxima and randomly select
+          let indexesOfMaxima = getIndexesOfMaxima(rewards);
+          action = indexesOfMaxima[getRandInt(0,indexesOfMaxima.length-1)];
+
+        } else {
+          //Random ACTION && create state
+          action = getRandInt(0,6);
+          while(columnFull(state, action)) {
+            action = getRandInt(0,6);
+          }
+          if (!rewards) {
+            player.qTable[stateHash] = [0, 0, 0, 0, 0, 0, 0];
+          }
+          //player.qTable[stateHash][action] = 0; // todo WHAT IS THIS?
+
+        }
+
+        player.lastStateHash = stateHash;
+        player.lastAction = action;
+        return action
+    }
+
+    // Get reward
+    function getRewards(player, stateHash) {
+      let rewards = player.qTable[stateHash];
+      if (!rewards) {rewards = [0, 0, 0, 0, 0, 0, 0];}
+
+      let board = unHash(stateHash);
+      let winner = checkForWin(board);
+      if (winner != null) {
+        if (winner == 3) {
+          return [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
+        } else if ((winner == 1 && player == player1) || (winner == 2 && player == player2)) {
+          return [1,1,1,1,1,1,1];
+        } else {
+          return [-1,-1,-1,-1,-1,-1,-1];
+        }
+      }
+
+      for (let col=0; col<7; col++) {
+        if (columnFull(board, col)) {
+          rewards[col] = -1;
+        }
+        // Otherwise leave it as is
+      }
+
+      return rewards;
+    }
+
+
+    // UPDATE
+    function update(player, nextState) {
+      let nextStateHash = hash(nextState);
+      let modificationValue;
+      let rewards = getRewards(player, player.lastStateHash);
+      let nextStateRewards = getRewards(player, nextStateHash);
+
+      if (nextStateRewards) {
+        // reward == (player.qTable[stateHash][action] (and environment cases));
+        let lr = player.learningRate;
+        //console.log("lr:" + lr);
+        let reward = rewards[player.lastAction];
+        //console.log("reward:" + reward);
+        let df = player.discountFactor;
+        //console.log("df:" + df);
+        let maxRewardOfNext = Math.max(...nextStateRewards);
+        //console.log("maxRewardOfNext:" + maxRewardOfNext);
+        let rewardBasic = player.qTable[player.lastStateHash][player.lastAction];
+        //console.log("rewardBasic:" + rewardBasic);
+        modificationValue = (lr * (reward + (df * maxRewardOfNext) - rewardBasic)).toFixed(4);
+      } else {
+        modificationValue = 0;
+      }
+      //console.log("Mod Value was: " + modificationValue)
+      player.qTable[player.lastStateHash][player.lastAction] += modificationValue;
+    }
+
+    // HASH
+    function hash(state) {
+      let hash = "";
+      for (let col=0;col<7;col++) {
+        for (let row=0;row<6;row++) {
+          hash += state[col][row];
+        }
+      }
+      return hash;
+    }
+
+    // UNHASH
+    function unHash(stateHash) {
+      let board = [[],[],[],[],[],[],[]];
+      let rowNum = 0;
+      let colNum = 0;
+      for (let i=0; i<stateHash.length; i++) {
+        board[Math.floor(i/6)].push(parseInt(stateHash[i]));
+      }
+      return board;
+    }
+
+    // END
+    /*
+    // MINIMAX FUNCTIONS
+    function getActionByMinimax(player, state) {
+      return minimax(true, state, 4)[1];
+    }
+
+    function getScoreForPosition(board, winner, player) {
+      if (!winner) {
+        winner = checkForWin(board);
+      }
+
+      if ((winner == 1 && player == 1) || (winner == 2 && player == 2)) {
+        console.log("win!")
+        return 10;
+      } else if ((winner == 1 && player == 2) || (winner == 2 && player == 1)) {
+        console.log("Loss")
+        return -10;
+      } else if (winner == 3) {
+        console.log("tie");
+        return 0;
+      } else {
+        console.log("other");
+        return 0;
+      }
+    }
+
+    function minimax(position, depth, alpha, beta, maximizingPlayer, player) {
+      let minEval, eval, maxEval;
+      let winner = checkForWin(position);
+      if (depth == 0 || winner != null) {
+        console.log("Depth clock out for player "+ player +" with winner == "+ winner);
+        return getScoreForPosition(position, winner, player);
+      }
+
+      if (maximizingPlayer) {
+          maxEval = -Infinity;
+          for (let col=0; col<7; col++) {
+            if (columnFull(position, col)) {
+              eval = -11;
+            } else {
+              temp = minimax(placeInBoardByPlayer(position, col, player), depth - 1, alpha, beta, false, (player==1?2:1));
+              console.log(temp);
+              eval = temp;
+            }
+            maxEval = Math.max(maxEval, eval);
+            alpha = Math.max(alpha, eval);
+            if (beta <= alpha) {
+              break;
+            }
+          }
+          return maxEval;
+      } else {
+        minEval = Infinity;
+        for (let col=0; col<7; col++) {
+          if (columnFull(position, col)) {
+            eval = 11;
+          } else {
+            temp = minimax(placeInBoardByPlayer(position, col, player), depth - 1, alpha, beta, true, (player==1?2:1));
+            console.log(temp);
+            eval = temp;
+          }
+          minEval = Math.min(minEval, eval);
+          beta = Math.min(beta, eval);
+          if (beta <= alpha) {
+            break;
+          }
+        }
+        return minEval;
+      }
+    }
+
+        // initial call
+    function testMinimax() {
+      let board = [[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,1],[0,0,0,0,2,1],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]];
+      let results = [];
+      for (let col=0; col<7; col++) {
+        results.push(minimax(placeInBoardByPlayer(board, col, 2), 10, -Infinity, Infinity, true, 2));
+      }
+      console.log(results);
+      let action = results.indexOf(Math.max(...results));
+      console.log("The best move is column: "+ action);
+    }
+
+
+    function placeInBoardByPlayer(board, colNum, player) {
+      console.log(player);
+      if (player == 1) {
+        blueTurn = true;
+      } else {
+        blueTurn = false;
+      }
+      return placeInBoard(board, colNum);
+    }
+    // END
+    */
+    /*
     // NN Training Functions (Q-Learning Functions)
     async function runTrain() {
       userPlaying = false;
@@ -419,3 +725,6 @@
       }
       return Matrix.from1DArraytoColumnMatrix(transformedBoard);
     }
+
+    // END
+    */
